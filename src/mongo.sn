@@ -1,0 +1,160 @@
+# ==============================================================================
+# sindarin-pkg-mongo/src/mongo.sn — MongoDB client using libmongoc
+# ==============================================================================
+#
+# Usage:
+#   import "sindarin-pkg-mongo/src/mongo"
+#
+#   var client: MongoClient = MongoClient.connect("mongodb://localhost:27017")
+#   var coll: MongoCollection = client.collection("mydb", "users")
+#
+#   coll.insertOne("{\"name\": \"Alice\", \"age\": 30}")
+#
+#   var docs: MongoDoc[] = coll.find("{\"name\": \"Alice\"}")
+#   for i: int = 0; i < docs.length; i += 1 =>
+#       print(docs[i].getString("name"))
+#       print(docs[i].getInt("age"))
+#
+#   coll.updateOne("{\"name\": \"Alice\"}", "{\"$set\": {\"age\": 31}}")
+#   coll.deleteOne("{\"name\": \"Bob\"}")
+#   coll.dispose()
+#   client.dispose()
+#
+# Methods:
+#   MongoClient.connect(uri)                      Connect to MongoDB server
+#   client.collection(db, name): MongoCollection  Get a collection
+#   client.dispose()                              Close connection
+#
+#   coll.insertOne(json)                          Insert a document (JSON string)
+#   coll.find(filter): MongoDoc[]                 Query with JSON filter, return all matches
+#   coll.updateOne(filter, update)                Update first matching document
+#   coll.updateMany(filter, update)               Update all matching documents
+#   coll.deleteOne(filter)                        Delete first matching document
+#   coll.deleteMany(filter)                       Delete all matching documents
+#   coll.count(filter): int                       Count matching documents
+#   coll.dispose()                                Free collection resources
+#
+#   doc.getString(key): str                       Field value as string ("" if missing or null)
+#   doc.getInt(key): int                          Field value as integer (0 if missing or null)
+#   doc.getFloat(key): double                     Field value as float (0.0 if missing or null)
+#   doc.getBool(key): bool                        Field value as boolean (false if missing or null)
+#   doc.isNull(key): bool                         True if field is missing or BSON null
+#   doc.toJson(): str                             Document as relaxed extended JSON string
+#
+# ==============================================================================
+
+@include <mongoc/mongoc.h>
+@link mongoc2
+@link bson2
+@link ssl
+@link crypto
+@link z
+@link zstd
+@link resolv
+@link rt
+@link utf8proc
+@source "mongo.sn.c"
+
+# ==============================================================================
+# MongoDoc — a single MongoDB document (value type, owned by MongoDoc[] array)
+# ==============================================================================
+
+@alias "RtMongoDoc"
+native struct MongoDoc =>
+    @alias "bson_ptr"
+    _bsonPtr: long
+
+    # Get string value for a named field ("" if missing or null)
+    @alias "sn_mongo_doc_get_string"
+    native fn getString(key: str): str
+
+    # Get integer value for a named field (0 if missing or null)
+    @alias "sn_mongo_doc_get_int"
+    native fn getInt(key: str): int
+
+    # Get float value for a named field (0.0 if missing or null)
+    @alias "sn_mongo_doc_get_float"
+    native fn getFloat(key: str): double
+
+    # Get boolean value for a named field (false if missing or null)
+    @alias "sn_mongo_doc_get_bool"
+    native fn getBool(key: str): bool
+
+    # True if field is missing or BSON null
+    @alias "sn_mongo_doc_is_null"
+    native fn isNull(key: str): bool
+
+    # Return document as relaxed extended JSON string
+    @alias "sn_mongo_doc_to_json"
+    native fn toJson(): str
+
+# ==============================================================================
+# MongoCollection — a MongoDB collection
+# ==============================================================================
+
+@alias "RtMongoCollection"
+native struct MongoCollection as ref =>
+    @alias "coll_ptr"
+    _collPtr: long
+
+    # Insert a document given as a JSON string
+    @alias "sn_mongo_coll_insert_one"
+    native fn insertOne(json: str): void
+
+    # Query with a JSON filter string, return all matching documents
+    fn find(filter: str): MongoDoc[] =>
+        return sn_mongo_coll_find(self, filter)
+
+    # Update the first document matching the JSON filter
+    @alias "sn_mongo_coll_update_one"
+    native fn updateOne(filter: str, update: str): void
+
+    # Update all documents matching the JSON filter
+    @alias "sn_mongo_coll_update_many"
+    native fn updateMany(filter: str, update: str): void
+
+    # Delete the first document matching the JSON filter
+    @alias "sn_mongo_coll_delete_one"
+    native fn deleteOne(filter: str): void
+
+    # Delete all documents matching the JSON filter
+    @alias "sn_mongo_coll_delete_many"
+    native fn deleteMany(filter: str): void
+
+    # Count documents matching the JSON filter
+    @alias "sn_mongo_coll_count"
+    native fn count(filter: str): int
+
+    # Free collection resources
+    @alias "sn_mongo_coll_dispose"
+    native fn dispose(): void
+
+# ==============================================================================
+# MongoClient — MongoDB connection
+# ==============================================================================
+
+@alias "RtMongoClient"
+native struct MongoClient as ref =>
+    @alias "client_ptr"
+    _clientPtr: long
+
+    # Connect to a MongoDB server
+    # uri format: "mongodb://host:port" or "mongodb://user:pass@host:port/db"
+    static fn connect(uri: str): MongoClient =>
+        return sn_mongo_client_connect(uri)
+
+    # Get a named collection from the given database
+    fn collection(db: str, name: str): MongoCollection =>
+        return sn_mongo_client_collection(self, db, name)
+
+    # Close the connection and free resources
+    @alias "sn_mongo_client_dispose"
+    native fn dispose(): void
+
+# ==============================================================================
+# Runtime Function Declarations
+# ==============================================================================
+
+native fn sn_mongo_client_connect(uri: str): MongoClient
+native fn sn_mongo_client_collection(client: MongoClient, db: str, name: str): MongoCollection
+native fn sn_mongo_coll_find(coll: MongoCollection, filter: str): MongoDoc[]
