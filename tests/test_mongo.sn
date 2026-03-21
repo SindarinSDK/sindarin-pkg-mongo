@@ -1,5 +1,5 @@
 import "../src/mongo"
-import "../.sn/sindarin-pkg-sdk/src/os/env"
+import "sindarin-pkg-sdk/src/os/env"
 
 fn mongoUri(): str =>
     return Environment.getOr("MONGODB_URI", "mongodb://localhost:27017")
