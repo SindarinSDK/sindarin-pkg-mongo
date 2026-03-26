@@ -233,12 +233,7 @@ RtMongoClient *sn_mongo_client_connect(char *uri)
         exit(1);
     }
 
-    RtMongoClient *c = (RtMongoClient *)calloc(1, sizeof(RtMongoClient));
-    if (!c) {
-        fprintf(stderr, "MongoClient.connect: allocation failed\n");
-        mongoc_client_destroy(client);
-        exit(1);
-    }
+    RtMongoClient *c = __sn__MongoClient__new();
     c->client_ptr = (long long)(uintptr_t)client;
     return c;
 }
@@ -256,12 +251,7 @@ RtMongoCollection *sn_mongo_client_collection(RtMongoClient *c, char *db, char *
         exit(1);
     }
 
-    RtMongoCollection *col = (RtMongoCollection *)calloc(1, sizeof(RtMongoCollection));
-    if (!col) {
-        fprintf(stderr, "MongoClient.collection: allocation failed\n");
-        mongoc_collection_destroy(coll);
-        exit(1);
-    }
+    RtMongoCollection *col = __sn__MongoCollection__new();
     col->coll_ptr = (long long)(uintptr_t)coll;
     return col;
 }
