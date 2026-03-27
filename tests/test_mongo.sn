@@ -2,114 +2,114 @@ import "../src/mongo"
 import "sindarin-pkg-sdk/src/os/env"
 
 fn mongoUri(): str =>
-    return Environment.getOr("MONGODB_URI", "mongodb://localhost:27017")
+  return Environment.getOr("MONGODB_URI", "mongodb://localhost:27017")
 
 fn main(): void =>
-    var client: MongoClient = MongoClient.connect(mongoUri())
-    var coll: MongoCollection = client.collection("testdb", "sn_mongo_test")
+  var client: MongoClient = MongoClient.connect(mongoUri())
+  var coll: MongoCollection = client.collection("testdb", "sn_mongo_test")
 
-    # Clean up from any previous run
-    coll.deleteMany("{}")
+  # Clean up from any previous run
+  coll.deleteMany("{}")
 
-    # Test 1: insertOne
-    coll.insertOne("{\"name\": \"Alice\", \"age\": 30, \"score\": 9.5, \"active\": true, \"notes\": \"first\"}")
-    coll.insertOne("{\"name\": \"Bob\", \"age\": 25, \"score\": 7.2}")
-    print("PASS: insertOne\n")
+  # Test 1: insertOne
+  coll.insertOne("{\"name\": \"Alice\", \"age\": 30, \"score\": 9.5, \"active\": true, \"notes\": \"first\"}")
+  coll.insertOne("{\"name\": \"Bob\", \"age\": 25, \"score\": 7.2}")
+  print("PASS: insertOne\n")
 
-    # Test 2: find returns correct count
-    var docs: MongoDoc[] = coll.find("{}")
-    if docs.length != 2 =>
-        print($"FAIL: expected 2 docs, got {docs.length}\n")
-        exit(1)
-    print("PASS: find count\n")
+  # Test 2: find returns correct count
+  var docs: MongoDoc[] = coll.find("{}")
+  if docs.length != 2 =>
+    print($"FAIL: expected 2 docs, got {docs.length}\n")
+    exit(1)
+  print("PASS: find count\n")
 
-    # Test 3: getString
-    var alice: MongoDoc[] = coll.find("{\"name\": \"Alice\"}")
-    if alice.length != 1 =>
-        print($"FAIL: expected 1 Alice doc, got {alice.length}\n")
-        exit(1)
-    if alice[0].getString("name") != "Alice" =>
-        print($"FAIL: expected 'Alice', got '{alice[0].getString(\"name\")}'\n")
-        exit(1)
-    print("PASS: getString\n")
+  # Test 3: getString
+  var alice: MongoDoc[] = coll.find("{\"name\": \"Alice\"}")
+  if alice.length != 1 =>
+    print($"FAIL: expected 1 Alice doc, got {alice.length}\n")
+    exit(1)
+  if alice[0].getString("name") != "Alice" =>
+    print($"FAIL: expected 'Alice', got '{alice[0].getString(\"name\")}'\n")
+    exit(1)
+  print("PASS: getString\n")
 
-    # Test 4: getInt
-    if alice[0].getInt("age") != 30 =>
-        print($"FAIL: expected age 30, got {alice[0].getInt(\"age\")}\n")
-        exit(1)
-    print("PASS: getInt\n")
+  # Test 4: getInt
+  if alice[0].getInt("age") != 30 =>
+    print($"FAIL: expected age 30, got {alice[0].getInt(\"age\")}\n")
+    exit(1)
+  print("PASS: getInt\n")
 
-    # Test 5: getFloat
-    if alice[0].getFloat("score") != 9.5 =>
-        print($"FAIL: expected score 9.5, got {alice[0].getFloat(\"score\")}\n")
-        exit(1)
-    print("PASS: getFloat\n")
+  # Test 5: getFloat
+  if alice[0].getFloat("score") != 9.5 =>
+    print($"FAIL: expected score 9.5, got {alice[0].getFloat(\"score\")}\n")
+    exit(1)
+  print("PASS: getFloat\n")
 
-    # Test 6: getBool
-    if !alice[0].getBool("active") =>
-        print("FAIL: expected active=true\n")
-        exit(1)
-    print("PASS: getBool\n")
+  # Test 6: getBool
+  if !alice[0].getBool("active") =>
+    print("FAIL: expected active=true\n")
+    exit(1)
+  print("PASS: getBool\n")
 
-    # Test 7: isNull — missing field is null, present field is not
-    var bob: MongoDoc[] = coll.find("{\"name\": \"Bob\"}")
-    if bob.length != 1 =>
-        print($"FAIL: expected 1 Bob doc, got {bob.length}\n")
-        exit(1)
-    if !bob[0].isNull("notes") =>
-        print("FAIL: Bob.notes should be null (missing field)\n")
-        exit(1)
-    if alice[0].isNull("notes") =>
-        print("FAIL: Alice.notes should not be null\n")
-        exit(1)
-    print("PASS: isNull\n")
+  # Test 7: isNull — missing field is null, present field is not
+  var bob: MongoDoc[] = coll.find("{\"name\": \"Bob\"}")
+  if bob.length != 1 =>
+    print($"FAIL: expected 1 Bob doc, got {bob.length}\n")
+    exit(1)
+  if !bob[0].isNull("notes") =>
+    print("FAIL: Bob.notes should be null (missing field)\n")
+    exit(1)
+  if alice[0].isNull("notes") =>
+    print("FAIL: Alice.notes should not be null\n")
+    exit(1)
+  print("PASS: isNull\n")
 
-    # Test 8: toJson returns a non-empty JSON string
-    var json: str = alice[0].toJson()
-    if json == "" =>
-        print("FAIL: toJson returned empty string\n")
-        exit(1)
-    print("PASS: toJson\n")
+  # Test 8: toJson returns a non-empty JSON string
+  var json: str = alice[0].toJson()
+  if json == "" =>
+    print("FAIL: toJson returned empty string\n")
+    exit(1)
+  print("PASS: toJson\n")
 
-    # Test 9: updateOne
-    coll.updateOne("{\"name\": \"Alice\"}", "{\"$set\": {\"age\": 31}}")
-    var updated: MongoDoc[] = coll.find("{\"name\": \"Alice\"}")
-    if updated[0].getInt("age") != 31 =>
-        print($"FAIL: expected Alice age 31 after update, got {updated[0].getInt(\"age\")}\n")
-        exit(1)
-    print("PASS: updateOne\n")
+  # Test 9: updateOne
+  coll.updateOne("{\"name\": \"Alice\"}", "{\"$set\": {\"age\": 31}}")
+  var updated: MongoDoc[] = coll.find("{\"name\": \"Alice\"}")
+  if updated[0].getInt("age") != 31 =>
+    print($"FAIL: expected Alice age 31 after update, got {updated[0].getInt(\"age\")}\n")
+    exit(1)
+  print("PASS: updateOne\n")
 
-    # Test 10: updateMany
-    coll.updateMany("{}", "{\"$set\": {\"synced\": true}}")
-    var synced: MongoDoc[] = coll.find("{\"synced\": true}")
-    if synced.length != 2 =>
-        print($"FAIL: expected 2 synced docs, got {synced.length}\n")
-        exit(1)
-    print("PASS: updateMany\n")
+  # Test 10: updateMany
+  coll.updateMany("{}", "{\"$set\": {\"synced\": true}}")
+  var synced: MongoDoc[] = coll.find("{\"synced\": true}")
+  if synced.length != 2 =>
+    print($"FAIL: expected 2 synced docs, got {synced.length}\n")
+    exit(1)
+  print("PASS: updateMany\n")
 
-    # Test 11: count
-    var n: int = coll.count("{}")
-    if n != 2 =>
-        print($"FAIL: expected count 2, got {n}\n")
-        exit(1)
-    print("PASS: count\n")
+  # Test 11: count
+  var n: int = coll.count("{}")
+  if n != 2 =>
+    print($"FAIL: expected count 2, got {n}\n")
+    exit(1)
+  print("PASS: count\n")
 
-    # Test 12: deleteOne
-    coll.deleteOne("{\"name\": \"Bob\"}")
-    n = coll.count("{}")
-    if n != 1 =>
-        print($"FAIL: expected count 1 after deleteOne, got {n}\n")
-        exit(1)
-    print("PASS: deleteOne\n")
+  # Test 12: deleteOne
+  coll.deleteOne("{\"name\": \"Bob\"}")
+  n = coll.count("{}")
+  if n != 1 =>
+    print($"FAIL: expected count 1 after deleteOne, got {n}\n")
+    exit(1)
+  print("PASS: deleteOne\n")
 
-    # Test 13: deleteMany
-    coll.deleteMany("{}")
-    n = coll.count("{}")
-    if n != 0 =>
-        print($"FAIL: expected count 0 after deleteMany, got {n}\n")
-        exit(1)
-    print("PASS: deleteMany\n")
+  # Test 13: deleteMany
+  coll.deleteMany("{}")
+  n = coll.count("{}")
+  if n != 0 =>
+    print($"FAIL: expected count 0 after deleteMany, got {n}\n")
+    exit(1)
+  print("PASS: deleteMany\n")
 
-    coll.dispose()
-    client.dispose()
-    print("PASS\n")
+  coll.dispose()
+  client.dispose()
+  print("PASS\n")
