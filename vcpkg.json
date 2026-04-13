@@ -1,0 +1,14 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "sindarin-mongo",
+  "version": "1.0.0",
+  "description": "MongoDB C driver for Sindarin",
+  "dependencies": [
+    {
+      "name": "mongo-c-driver",
+      "default-features": false,
+      "features": ["openssl", "zstd"]
+    },
+    "openssl"
+  ]
+}
