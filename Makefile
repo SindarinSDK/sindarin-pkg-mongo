@@ -23,6 +23,12 @@ SN           ?= sn
 SRC_SOURCES  := $(wildcard src/*.sn) $(wildcard src/*.sn.c)
 RUN_TESTS_SN := .sn/sindarin-pkg-test/src/execute.sn
 RUN_TESTS    := $(BIN_DIR)/run_tests$(EXE_EXT)
+PKG_CFLAGS   := -I$(CURDIR)/libs/$(PLATFORM)/include
+PKG_LDFLAGS  := -L$(CURDIR)/libs/$(PLATFORM)/lib
+
+test $(RUN_TESTS): export SN_CFLAGS := $(PKG_CFLAGS) $(SN_CFLAGS)
+test $(RUN_TESTS): export SN_LDFLAGS := $(PKG_LDFLAGS) $(SN_LDFLAGS)
+test: export MONGODB_URI := mongodb://localhost:27017
 
 setup:
 	@$(SN) --install
@@ -34,10 +40,7 @@ endif
 	@docker compose up -d --wait
 
 test: setup $(RUN_TESTS)
-	@MONGODB_URI=mongodb://localhost:27017 \
-	 SN_CFLAGS="-I$(CURDIR)/libs/$(PLATFORM)/include $(SN_CFLAGS)" \
-	 SN_LDFLAGS="-L$(CURDIR)/libs/$(PLATFORM)/lib $(SN_LDFLAGS)" \
-	 $(RUN_TESTS) --verbose
+	@$(RUN_TESTS) --verbose
 
 teardown:
 	@docker compose down
@@ -46,9 +49,7 @@ $(BIN_DIR):
 	@mkdir -p $(BIN_DIR)
 
 $(RUN_TESTS): $(RUN_TESTS_SN) $(SRC_SOURCES) | $(BIN_DIR)
-	@SN_CFLAGS="-I$(CURDIR)/libs/$(PLATFORM)/include $(SN_CFLAGS)" \
-	 SN_LDFLAGS="-L$(CURDIR)/libs/$(PLATFORM)/lib $(SN_LDFLAGS)" \
-	 $(SN) $(RUN_TESTS_SN) -o $@ -l 1
+	@$(SN) $(RUN_TESTS_SN) -o $@ -l 1
 
 VCPKG_ROOT ?= $(CURDIR)/vcpkg
 TRIPLET    ?= $(if $(filter windows,$(PLATFORM)),x64-mingw-static,$(if $(filter aarch64,$(shell uname -m 2>/dev/null)),arm64,x64)-$(if $(filter darwin,$(PLATFORM)),osx,linux))
